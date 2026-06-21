@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- ====== 网站头部 ====== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="易显坤的个人作品集网站 - Web前端开发作品展示">
+    <meta name="keywords" content="易显坤, 作品集, Web前端, 个人网站">
+    <title>易显坤 | 个人作品集</title>
+
+    <!-- ====== 外部样式 ====== -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ============================================
+    头部导航栏
+    ============================================ -->
+    <header>
+        <nav>
+            <!-- 网站Logo -->
+            <a href="index.html" class="nav-logo">易<span>显坤</span></a>
+
+            <!-- 导航链接 -->
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="index.html#about">关于</a></li>
+                <li><a href="works.html">作品集</a></li>
+                <li><a href="form.html">留言</a></li>
+            </ul>
+
+            <!-- 右侧操作区 -->
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button id="darkModeToggle" title="切换亮色/暗黑模式">🌞</button>
+                <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+    Hero 欢迎区域
+    ============================================ -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-badge">✦ Web 前端开发</div>
+            <h1>你好，我是 <span class="highlight">易显坤</span></h1>
+            <p>
+                热爱前端开发，专注于构建美观、流畅、用户友好的 Web 应用。
+                用代码创造体验，用设计传递价值。
+            </p>
+            <div class="hero-buttons">
+                <a href="works.html" class="btn btn-primary">查看作品</a>
+                <a href="form.html" class="btn btn-outline">联系我</a>
+            </div>
+            <!-- 实时时间显示 -->
+            <div id="clock"></div>
+        </div>
+    </section>
+
+    <!-- ============================================
+    关于我区域
+    ============================================ -->
+    <section class="section about-section" id="about">
+        <h2 class="section-title">关于我</h2>
+        <p class="section-subtitle">了解我的背景与技能</p>
+
+        <div class="about-content">
+            <!-- 简介文字 -->
+            <div class="about-text">
+                <h3>一名充满热情的前端开发者</h3>
+                <p>
+                    你好！我是易显坤，目前就读于现代教育技术。
+                    我对 Web 前端开发充满热情，自学习以来一直在不断探索和实践
+                    HTML、CSS 和 JavaScript 的相关技术。
+                </p>
+                <p>
+                    我相信好的网站不仅要有美观的界面，更要有流畅的交互体验。
+                    在这个个人作品集中，你可以看到我在前端开发方面的学习成果和项目实践。
+                </p>
+                <p>
+                    我致力于将设计美学与代码工程相结合，创造出既好看又好用的 Web 产品。
+                </p>
+
+                <!-- 数据统计 -->
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">5+</span>
+                        <span class="stat-label">项目作品</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">1</span>
+                        <span class="stat-label">年学习经验</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">5+</span>
+                        <span class="stat-label">掌握技术</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+    精选作品区域（首页展示 3 个）
+    ============================================ -->
+    <section class="section" id="works">
+        <h2 class="section-title">精选作品</h2>
+        <p class="section-subtitle">以下是我近期的一些前端开发项目</p>
+
+        <div class="featured-projects">
+
+            <!-- 作品卡片 1 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=1'" data-category="web">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#3b1f6e);">
+                    🛒
+                </div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">Web应用</span>
+                    <h3>电商平台首页重设计</h3>
+                    <p>一个现代化电商平台的首页设计方案，采用Flex和Grid布局实现响应式卡片展示，包含商品分类、推荐区和购物车交互。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>HTML5 / CSS3 / JS</span>
+                    <a href="works-detail.html?id=1">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 作品卡片 2 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=2'" data-category="app">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#1e3a5f);">
+                    🌤️
+                </div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">小工具</span>
+                    <h3>天气预报小应用</h3>
+                    <p>基于JavaScript开发的实时天气查询工具，通过API获取天气数据，实现动态展示温度、湿度和未来天气预报功能。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>JavaScript / API</span>
+                    <a href="works-detail.html?id=2">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 作品卡片 3 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=3'" data-category="design">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#5f1e3a);">
+                    ✏️
+                </div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">UI设计</span>
+                    <h3>极简风格博客主题</h3>
+                    <p>一个注重阅读体验的极简博客主题，优雅的排版、舒适的间距和暗色模式自适应，适合技术写作者使用。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>HTML / CSS / 响应式</span>
+                    <a href="works-detail.html?id=3">查看详情 →</a>
+                </div>
+            </article>
+
+        </div>
+
+        <!-- 查看更多按钮 -->
+        <div style="text-align:center;margin-top:40px;">
+            <a href="works.html" class="btn btn-primary">查看全部作品</a>
+        </div>
+    </section>
+
+    <!-- ============================================
+    回到顶部按钮
+    ============================================ -->
+    <button id="backToTop" title="回到顶部">↑</button>
+
+    <!-- ============================================
+    页脚
+    ============================================ -->
+    <footer>
+        <div class="footer-content">
+            <!-- 社交链接 -->
+            <div class="footer-social">
+                <a href="#" title="GitHub">G</a>
+                <a href="#" title="微博">微</a>
+                <a href="#" title="邮箱">@</a>
+            </div>
+            <!-- 版权信息 -->
+            <p class="footer-copy">
+                &copy; 2026 易显坤 | 个人作品集 &nbsp;|&nbsp; 学号：25303230134
+            </p>
+        </div>
+    </footer>
+
+    <!-- ====== JavaScript ====== -->
+    <script src="js/main.js"></script>
+</body>
+</html>

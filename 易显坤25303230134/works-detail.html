@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- ====== 作品详情页 ====== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="项目详情 - 易显坤的作品集">
+    <title>项目详情 - 易显坤</title>
+
+    <!-- ==================== 样式 ==================== -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 详情页特有样式 */
+        .detail-hero-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+    头部导航栏
+    ============================================ -->
+    <header>
+        <nav>
+            <a href="index.html" class="nav-logo">易<span>显坤</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="index.html#about">关于</a></li>
+                <li><a href="works.html">作品集</a></li>
+                <li><a href="form.html">留言</a></li>
+            </ul>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button id="darkModeToggle" title="切换亮色/暗黑模式">🌞</button>
+                <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+    作品详情主体（通过JS动态渲染）
+    ============================================ -->
+    <section class="detail-page">
+        <!-- 详情头部 -->
+        <div class="detail-hero">
+            <div class="detail-hero-icon" id="detailIcon">🛒</div>
+            <h1 id="detailTitle">项目标题</h1>
+            <div class="detail-tags" id="detailTags">
+                <span>Web应用</span>
+            </div>
+        </div>
+
+        <!-- 详情内容 -->
+        <div class="detail-content" id="detailContent">
+            <!-- 内容由JavaScript动态生成 -->
+        </div>
+    </section>
+
+    <!-- ============================================
+    回到顶部按钮
+    ============================================ -->
+    <button id="backToTop" title="回到顶部">↑</button>
+
+    <!-- ============================================
+    页脚
+    ============================================ -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-social">
+                <a href="#" title="GitHub">G</a>
+                <a href="#" title="微博">微</a>
+                <a href="#" title="邮箱">@</a>
+            </div>
+            <p class="footer-copy">
+                &copy; 2026 易显坤 | 个人作品集 &nbsp;|&nbsp; 学号：25303230134
+            </p>
+        </div>
+    </footer>
+
+    <!-- ====== JavaScript ====== -->
+    <script src="js/main.js"></script>
+
+    <!-- ====== 详情页数据渲染 ====== -->
+    <script>
+        // ========== 项目数据 ==========
+        var projectsData = {
+            "1": {
+                icon: "🛒",
+                title: "电商平台首页重设计",
+                tags: ["Web应用", "响应式设计", "UI/UX"],
+                overview: "这是一个为虚拟电商平台设计的现代化首页方案。项目重点关注用户体验和视觉层次，通过合理的布局和交互设计提升商品的展示效果和转化率。",
+                features: [
+                    "响应式卡片布局，适配移动端到桌面端",
+                    "商品分类导航与筛选功能",
+                    "购物车交互（添加/删除/数量调整）",
+                    "商品推荐轮播区域",
+                    "用户评价展示模块"
+                ],
+                techStack: ["HTML5", "CSS3 (Flex/Grid)", "JavaScript", "响应式设计"],
+                challenge: "如何在有限的页面空间内展示大量商品信息同时保持界面的整洁和美观是本次设计的主要挑战。通过采用卡片式设计和渐进式信息展示策略，在视觉密度和可读性之间取得了良好平衡。",
+                result: "最终呈现了一个视觉层次清晰、交互流畅的电商首页，在移动端和桌面端均有优秀的展示效果，用户浏览体验得到显著提升。"
+            },
+            "2": {
+                icon: "🌤️",
+                title: "天气预报小应用",
+                tags: ["小工具", "API调用", "数据可视化"],
+                overview: "一个基于JavaScript开发的实时天气查询Web应用，通过调用公开天气API获取实时数据，以直观的界面展示当前天气状况和未来天气预报。",
+                features: [
+                    "实时天气数据获取与展示",
+                    "城市搜索功能",
+                    "未来7天天气预报",
+                    "天气图标动态展示",
+                    "温度/湿度/风速等详细信息"
+                ],
+                techStack: ["JavaScript (ES6+)", "Fetch API", "CSS3", "HTML5"],
+                challenge: "API数据的异步获取和状态管理是开发过程中的关键难点。需要处理加载状态、错误提示和数据更新等多个状态，确保用户在不同网络条件下都有良好的使用体验。",
+                result: "开发完成了一个功能完整的天气查询工具，界面简洁美观，数据更新及时，用户体验流畅。"
+            },
+            "3": {
+                icon: "✏️",
+                title: "极简风格博客主题",
+                tags: ["UI设计", "博客", "排版设计"],
+                overview: "一个专注于阅读体验的极简博客主题设计。以内容为核心，通过克制而优雅的视觉设计，为技术写作者提供一个舒适的文字分享平台。",
+                features: [
+                    "清晰的内容层级和排版系统",
+                    "暗色模式自动适配",
+                    "文章目录导航",
+                    "标签分类系统",
+                    "评论板块布局"
+                ],
+                techStack: ["HTML5", "CSS3", "平面设计", "排版设计"],
+                challenge: "极简设计意味着每一处细节都需要经得起推敲。字体选择、行距、间距、色彩——每个视觉元素都需要服务于更好的阅读体验，这需要在克制中寻求精确。",
+                result: "完成了一个兼具美感和功能性的博客主题，在技术社区获得了良好反馈，被多位写作者采用。"
+            },
+            "4": {
+                icon: "📝",
+                title: "在线待办事项管理",
+                tags: ["Web应用", "数据持久化", "生产力工具"],
+                overview: "一个功能完整的在线待办事项管理工具，帮助用户高效管理日常任务。支持任务的增删改查和分类管理，所有数据保存在浏览器本地存储中。",
+                features: [
+                    "添加新的待办事项",
+                    "编辑和删除现有任务",
+                    "按类别筛选任务",
+                    "任务完成状态标记",
+                    "数据持久化（localStorage）"
+                ],
+                techStack: ["JavaScript", "localStorage", "CSS3", "HTML5"],
+                challenge: "如何设计直观的用户交互流程使任务管理变得高效是关键。通过拖拽排序、快捷键支持和即时搜索等功能，显著提升了工具的易用性。",
+                result: "一个轻量级的待办管理工具，界面清爽、操作高效，适合日常个人任务管理使用。"
+            },
+            "5": {
+                icon: "🎵",
+                title: "音乐播放器界面",
+                tags: ["小工具", "媒体交互", "UI设计"],
+                overview: "一个仿主流音乐播放器的Web界面设计，包含完整的播放控制功能、歌单管理和专辑封面展示，为用户提供沉浸式的音乐体验。",
+                features: [
+                    "播放/暂停控制",
+                    "进度条拖拽",
+                    "音量调节",
+                    "歌单管理",
+                    "专辑封面展示"
+                ],
+                techStack: ["HTML5", "CSS3", "JavaScript", "媒体API"],
+                challenge: "音频播放的控制逻辑和界面的实时状态同步是开发中的主要技术挑战。需要处理播放状态、进度更新和用户交互之间的精确协调。",
+                result: "打造了一个视觉精美、交互完整的音乐播放器界面，模拟了主流播放器的核心功能和操作体验。"
+            },
+            "6": {
+                icon: "📊",
+                title: "数据看板仪表盘",
+                tags: ["UI设计", "数据可视化", "管理后台"],
+                overview: "一个面向管理后台场景的数据可视化仪表盘界面设计，通过图表和数字卡片直观展示关键业务指标，帮助管理者快速掌握运营状况。",
+                features: [
+                    "关键指标数据卡片",
+                    "趋势图表展示",
+                    "实时数据更新模块",
+                    "响应式看板布局",
+                    "暗色/亮色主题适配"
+                ],
+                techStack: ["CSS3", "响应式布局", "数据可视化", "UI/UX设计"],
+                challenge: "在同一个界面中整合多种数据展示形式且不显得杂乱是主要设计挑战。采用网格化布局和模块化设计，让不同数据模块各居其位、清晰可辨。",
+                result: "完成了一个专业级别的数据看板界面设计，布局合理、信息层次分明，适用于多种管理后台场景。"
+            }
+        };
+
+        // ========== 渲染详情页 ==========
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("作品详情页加载完成");
+
+            // 获取URL参数中的项目ID
+            var urlParams = new URLSearchParams(window.location.search);
+            var projectId = urlParams.get("id") || "1";
+
+            var project = projectsData[projectId];
+
+            if (!project) {
+                document.getElementById("detailTitle").textContent = "项目未找到";
+                return;
+            }
+
+            // 更新页面标题
+            document.title = project.title + " - 易显坤";
+
+            // 渲染头部
+            document.getElementById("detailIcon").textContent = project.icon;
+            document.getElementById("detailTitle").textContent = project.title;
+
+            var tagsContainer = document.getElementById("detailTags");
+            tagsContainer.innerHTML = "";
+            project.tags.forEach(function (tag) {
+                var span = document.createElement("span");
+                span.textContent = tag;
+                tagsContainer.appendChild(span);
+            });
+
+            // 渲染内容区域
+            var content = document.getElementById("detailContent");
+
+            // 项目概述
+            var html = "";
+            html += '<h2>项目概述</h2>';
+            html += '<p>' + project.overview + '</p>';
+
+            // 技术栈
+            html += '<h3>技术栈</h3>';
+            html += '<div class="tech-stack">';
+            project.techStack.forEach(function (tech) {
+                html += '<span>' + tech + '</span>';
+            });
+            html += '</div>';
+
+            // 功能特性
+            html += '<h3>功能特性</h3>';
+            html += '<ul>';
+            project.features.forEach(function (feat) {
+                html += '<li>' + feat + '</li>';
+            });
+            html += '</ul>';
+
+            // 技术挑战
+            html += '<h3>技术挑战与解决方案</h3>';
+            html += '<p>' + project.challenge + '</p>';
+
+            // 项目成果
+            html += '<h3>项目成果</h3>';
+            html += '<p>' + project.result + '</p>';
+
+            // 上下页导航
+            html += '<div class="detail-nav">';
+            html += '<a href="works.html" class="btn btn-outline">← 返回作品列表</a>';
+            html += '<a href="form.html" class="btn btn-primary">联系我 →</a>';
+            html += '</div>';
+
+            content.innerHTML = html;
+        });
+    </script>
+</body>
+</html>

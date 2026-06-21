@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- ====== 作品列表页 ====== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="易显坤的作品展示 - Web前端项目列表">
+    <meta name="keywords" content="易显坤, 作品列表, Web项目, 前端开发">
+    <title>作品集 - 易显坤</title>
+
+    <!-- ====== 外部样式 ====== -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ============================================
+    头部导航栏
+    ============================================ -->
+    <header>
+        <nav>
+            <a href="index.html" class="nav-logo">易<span>显坤</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="index.html#about">关于</a></li>
+                <li><a href="works.html">作品集</a></li>
+                <li><a href="form.html">留言</a></li>
+            </ul>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button id="darkModeToggle" title="切换亮色/暗黑模式">🌞</button>
+                <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+    作品列表主体
+    ============================================ -->
+    <section class="section works-list-page">
+        <h2 class="section-title">我的作品集</h2>
+        <p class="section-subtitle">探索我的前端开发项目与设计作品</p>
+
+        <!-- 分类筛选 -->
+        <div class="works-filter">
+            <button class="active" data-filter="all">全部</button>
+            <button data-filter="web">Web应用</button>
+            <button data-filter="app">小工具</button>
+            <button data-filter="design">UI设计</button>
+        </div>
+
+        <!-- 作品网格 -->
+        <div class="featured-projects">
+
+            <!-- 项目 1 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=1'" data-category="web">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#3b1f6e);">🛒</div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">Web应用</span>
+                    <h3>电商平台首页重设计</h3>
+                    <p>一个现代化电商平台的首页设计方案，采用Flex和Grid布局实现响应式卡片展示，包含商品分类、推荐区和购物车交互。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>HTML5 / CSS3 / JS</span>
+                    <a href="works-detail.html?id=1">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 项目 2 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=2'" data-category="app">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#1e3a5f);">🌤️</div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">小工具</span>
+                    <h3>天气预报小应用</h3>
+                    <p>基于JavaScript开发的实时天气查询工具，通过API获取天气数据，实现动态展示温度、湿度和未来天气预报功能。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>JavaScript / API</span>
+                    <a href="works-detail.html?id=2">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 项目 3 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=3'" data-category="design">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#5f1e3a);">✏️</div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">UI设计</span>
+                    <h3>极简风格博客主题</h3>
+                    <p>一个注重阅读体验的极简博客主题，优雅的排版、舒适的间距和暗色模式自适应，适合技术写作者使用。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>HTML / CSS / 响应式</span>
+                    <a href="works-detail.html?id=3">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 项目 4 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=4'" data-category="web">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#2d4a1e);">📝</div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">Web应用</span>
+                    <h3>在线待办事项管理</h3>
+                    <p>一个功能完整的待办事项管理工具，支持添加、编辑、删除和分类管理任务，数据存储在localStorage中。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>JS / localStorage</span>
+                    <a href="works-detail.html?id=4">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 项目 5 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=5'" data-category="app">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#5f4e1e);">🎵</div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">小工具</span>
+                    <h3>音乐播放器界面</h3>
+                    <p>一个仿主流音乐播放器的Web界面，包含播放控制、进度条、歌单管理和专辑封面展示等功能。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>HTML / CSS / JS</span>
+                    <a href="works-detail.html?id=5">查看详情 →</a>
+                </div>
+            </article>
+
+            <!-- 项目 6 -->
+            <article class="project-card" onclick="location.href='works-detail.html?id=6'" data-category="design">
+                <div class="project-card-img" style="background:linear-gradient(135deg,#1a1a2e,#1e4a3f);">📊</div>
+                <div class="project-card-body">
+                    <span class="project-card-tag">UI设计</span>
+                    <h3>数据看板仪表盘</h3>
+                    <p>一个数据可视化仪表盘界面设计，包含图表分析、数据卡片和实时更新模块，适用于管理后台场景。</p>
+                </div>
+                <div class="project-card-footer">
+                    <span>CSS / 响应式设计</span>
+                    <a href="works-detail.html?id=6">查看详情 →</a>
+                </div>
+            </article>
+
+        </div>
+    </section>
+
+    <!-- ============================================
+    回到顶部按钮
+    ============================================ -->
+    <button id="backToTop" title="回到顶部">↑</button>
+
+    <!-- ============================================
+    页脚
+    ============================================ -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-social">
+                <a href="#" title="GitHub">G</a>
+                <a href="#" title="微博">微</a>
+                <a href="#" title="邮箱">@</a>
+            </div>
+            <p class="footer-copy">
+                &copy; 2026 易显坤 | 个人作品集 &nbsp;|&nbsp; 学号：25303230134
+            </p>
+        </div>
+    </footer>
+
+    <!-- ====== JavaScript ====== -->
+    <script src="js/main.js"></script>
+
+    <!-- tab切换额外手动激活 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("作品集列表页加载完成");
+        });
+    </script>
+</body>
+</html>

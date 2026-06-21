@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- ====== 留言/表单页 ====== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="联系易显坤 - 留言表单">
+    <meta name="keywords" content="易显坤, 联系, 留言, 表单">
+    <title>联系我 - 易显坤</title>
+
+    <!-- ====== 外部样式 ====== -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ============================================
+    头部导航栏
+    ============================================ -->
+    <header>
+        <nav>
+            <a href="index.html" class="nav-logo">易<span>显坤</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="index.html#about">关于</a></li>
+                <li><a href="works.html">作品集</a></li>
+                <li><a href="form.html">留言</a></li>
+            </ul>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button id="darkModeToggle" title="切换亮色/暗黑模式">🌞</button>
+                <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============================================
+    表单页面主体
+    ============================================ -->
+    <section class="section form-page">
+        <h2 class="section-title">联系我</h2>
+        <p class="section-subtitle">有任何问题或合作意向？欢迎给我留言</p>
+
+        <!-- 表单容器 -->
+        <div class="form-container">
+            <form id="contactForm" novalidate>
+                <!-- 姓名 -->
+                <div class="form-group">
+                    <label for="name">姓名 <span class="required">*</span></label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="请输入您的姓名（如：张三）"
+                        required
+                    />
+                    <div class="form-error" id="nameError">姓名不能为空</div>
+                </div>
+
+                <!-- 邮箱 -->
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="请输入您的邮箱地址（如：example@mail.com）"
+                    />
+                    <div class="form-error" id="emailError">邮箱格式不正确</div>
+                </div>
+
+                <!-- 联系偏好（单选） -->
+                <div class="form-group">
+                    <label>偏好的联系方式 <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="contactPref" value="email" />
+                            邮箱
+                        </label>
+                        <label>
+                            <input type="radio" name="contactPref" value="phone" />
+                            电话
+                        </label>
+                        <label>
+                            <input type="radio" name="contactPref" value="wechat" />
+                            微信
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 感兴趣的方向（多选） -->
+                <div class="form-group">
+                    <label>感兴趣的方向</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="interest" value="web" />
+                            Web开发
+                        </label>
+                        <label>
+                            <input type="checkbox" name="interest" value="design" />
+                            UI/UX设计
+                        </label>
+                        <label>
+                            <input type="checkbox" name="interest" value="collaboration" />
+                            项目合作
+                        </label>
+                        <label>
+                            <input type="checkbox" name="interest" value="other" />
+                            其他
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 留言内容 -->
+                <div class="form-group">
+                    <label for="message">留言内容 <span class="required">*</span></label>
+                    <textarea
+                        id="message"
+                        name="message"
+                        placeholder="请输入您的留言内容（至少10个字符）"
+                        required
+                    ></textarea>
+                    <div class="form-error" id="messageError">留言内容不能为空</div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <button type="submit" class="btn btn-primary" style="width:100%;">
+                    提交留言
+                </button>
+            </form>
+        </div>
+
+        <!-- 时钟显示 -->
+        <div id="clock" style="margin-top:40px;"></div>
+    </section>
+
+    <!-- ============================================
+    回到顶部按钮
+    ============================================ -->
+    <button id="backToTop" title="回到顶部">↑</button>
+
+    <!-- ============================================
+    页脚
+    ============================================ -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-social">
+                <a href="#" title="GitHub">G</a>
+                <a href="#" title="微博">微</a>
+                <a href="#" title="邮箱">@</a>
+            </div>
+            <p class="footer-copy">
+                &copy; 2026 易显坤 | 个人作品集 &nbsp;|&nbsp; 学号：25303230134
+            </p>
+        </div>
+    </footer>
+
+    <!-- ====== JavaScript ====== -->
+    <script src="js/main.js"></script>
+</body>
+</html>
