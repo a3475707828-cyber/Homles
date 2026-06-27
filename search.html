@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>球星搜索 · APEX ARENA</title>
+<style>
+/* ========== CSS Variables & Reset ========== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg-deep: #08080e;
+  --bg-surface: #f0f0f5;
+  --bg-elevated: #f8f8fc;
+  --text-primary: #1c1c22;
+  --text-secondary: #5a5860;
+  --text-muted: #94929a;
+  --accent-flame: #ff3b1f;
+  --accent-gold: #ffb11b;
+  --accent-ember: #e85d04;
+  --accent-ice: #3b82f6;
+  --border-subtle: rgba(0,0,0,0.08);
+  --border-active: rgba(0,0,0,0.15);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --font-display: 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', sans-serif;
+  --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 100% 80% at 25% 15%, rgba(255,255,255,0.7) 0%, transparent 52%),
+    radial-gradient(ellipse 90% 90% at 72% 45%, rgba(248,248,252,0.45) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 85% at 45% 78%, rgba(235,235,242,0.35) 0%, transparent 45%),
+    linear-gradient(172deg, #cfcfe0 0%, #dedee8 40%, #c4c4d6 100%);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#bg-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ========== Navigation ========== */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 0 2rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(240,240,245,0.9) 40%, rgba(240,240,245,0) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background var(--transition-smooth);
+}
+.nav.scrolled {
+  background: rgba(240,240,245,0.86);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(16px);
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.15em;
+  color: var(--text-primary);
+  text-decoration: none;
+  position: relative;
+  text-transform: uppercase;
+}
+.nav-logo span { color: var(--accent-flame); }
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  position: relative;
+  padding: 0.25rem 0;
+  transition: color var(--transition-fast);
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 2px;
+  background: var(--accent-flame);
+  transition: width var(--transition-smooth);
+}
+.nav-links a:hover,
+.nav-links a.active { color: var(--text-primary); }
+.nav-links a:hover::after,
+.nav-links a.active::after { width: 100%; }
+
+/* ========== Main Content ========== */
+.main {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 120px 2rem 4rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ========== Search Hero ========== */
+.search-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.search-hero-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  border: 1px solid rgba(255,177,27,0.3);
+  padding: 0.35rem 1rem;
+  margin-bottom: 1.5rem;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  animation: fadeInScale 0.6s 0.05s cubic-bezier(0.16,1,0.3,1) both;
+}
+.search-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+  perspective: 800px;
+}
+.search-hero-title .line1,
+.search-hero-title .line2 {
+  display: block;
+  opacity: 0;
+  transform: perspective(800px) rotateY(-140deg) scale(0.4);
+  transform-origin: center center;
+  animation: titleRotateIn 1s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.search-hero-title .line1 {
+  color: var(--text-primary);
+  animation-delay: 0.15s;
+}
+.search-hero-title .line2 {
+  background: linear-gradient(135deg, var(--accent-flame) 0%, var(--accent-gold) 50%, var(--accent-ember) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation-delay: 0.5s;
+}
+
+@keyframes titleRotateIn {
+  0% {
+    opacity: 0;
+    transform: perspective(800px) rotateY(-140deg) scale(0.4);
+  }
+  55% {
+    opacity: 0.8;
+    transform: perspective(800px) translateX(-18px) rotateY(-28deg) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(800px) rotateY(0) scale(1);
+  }
+}
+.search-hero-desc {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 2.5rem;
+  animation: fadeInUp 0.7s 0.3s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ========== Search Box ========== */
+.search-wrapper {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto 3rem;
+  animation: fadeInUp 0.7s 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+.search-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-flame), var(--accent-gold), var(--accent-ember));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+.search-wrapper:focus-within::before {
+  opacity: 0.6;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-active);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+.search-box:focus-within { border-color: transparent; }
+.search-box .search-icon {
+  padding: 0 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 1.1rem 1rem;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  outline: none;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-btn {
+  background: var(--accent-flame);
+  color: #fff;
+  border: none;
+  padding: 0 1.8rem;
+  height: 100%;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  margin-right: -1px;
+}
+.search-btn:hover {
+  background: #ff5a3a;
+}
+.search-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* Quick suggestions */
+.search-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.search-suggestion {
+  background: rgba(255,255,255,0.45); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.search-suggestion:hover {
+  border-color: var(--accent-flame);
+  color: var(--accent-flame);
+  background: rgba(255,59,31,0.08);
+}
+
+/* ========== Results ========== */
+.results-section {
+  display: none;
+}
+.results-section.visible { display: block; }
+.results-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Result Card */
+.result-card {
+  background: rgba(255,255,255,0.45); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0;
+  transform: perspective(1000px) rotateY(-130deg) scale(0.3);
+  transform-origin: center center;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+  will-change: transform, opacity;
+}
+/* Step 1: 从中间向左旋转飞入 */
+.result-card.stage1 {
+  opacity: 0.7;
+  transform: perspective(1000px) translateX(-24px) rotateY(-25deg) scale(0.88);
+}
+/* Step 2: 归位排列 */
+.result-card.visible {
+  opacity: 1;
+  transform: perspective(1000px) rotateY(0) scale(1);
+}
+.result-card:hover {
+  transform: perspective(1000px) translateY(-4px) rotateX(2deg);
+  border-color: var(--accent-flame);
+  box-shadow: 0 8px 32px rgba(255,59,31,0.12);
+}
+.result-card-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: top center;
+  background: var(--bg-elevated);
+  display: block;
+}
+.result-card-img.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: var(--text-muted);
+  background: linear-gradient(135deg, #e0e0ec, #d4d4e0);
+}
+.result-card-body { padding: 1.25rem; }
+.result-card-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.result-card-desc {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.result-card-extract {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+.result-card-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.result-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--accent-flame);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: gap var(--transition-fast);
+}
+.result-card-link:hover { gap: 0.6rem; }
+.result-card-link .arrow { font-size: 0.8rem; }
+.result-card-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: gap var(--transition-fast);
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(255,177,27,0.3);
+  border-radius: 4px;
+}
+.result-card-live:hover {
+  gap: 0.6rem;
+  background: rgba(255,177,27,0.1);
+  border-color: var(--accent-gold);
+}
+.result-card-live .live-dot {
+  width: 6px; height: 6px;
+  background: var(--accent-flame);
+  border-radius: 50%;
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ========== States ========== */
+.state-message {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+.state-message .state-icon { font-size: 3rem; margin-bottom: 1rem; }
+.state-message .state-text { font-size: 1rem; }
+.state-message .state-sub { font-size: 0.8rem; margin-top: 0.5rem; }
+
+.loading-spinner {
+  display: none;
+  width: 40px; height: 40px;
+  margin: 2rem auto;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--accent-flame);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-spinner.visible { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Animations */
+@keyframes slideUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeInScale { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+
+/* ========== Responsive ========== */
+@media (max-width: 640px) {
+  .main { padding: 100px 1rem 3rem; }
+  .nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .search-box { flex-direction: row; }
+  .search-input { font-size: 1rem; padding: 0.9rem 0.75rem; }
+  .search-btn { padding: 0 1.2rem; font-size: 0.75rem; }
+  .results-grid { grid-template-columns: 1fr; }
+}
+
+/* ========== Dark Theme Overrides ========== */
+[data-theme="dark"] {
+  --bg-deep: #08080e;
+  --bg-surface: #050508;
+  --bg-elevated: #0a0a10;
+  --text-primary: #e8e6e3;
+  --text-secondary: #9d9a95;
+  --text-muted: #5c5a56;
+  --border-subtle: rgba(255,255,255,0.04);
+  --border-active: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] body {
+  background:
+    linear-gradient(180deg, #000000 0%, #08080c 50%, #020204 100%);
+}
+[data-theme="dark"] .nav {
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0) 100%);
+}
+[data-theme="dark"] .nav.scrolled {
+  background: rgba(0,0,0,0.92);
+}
+[data-theme="dark"] .search-box {
+  background: var(--bg-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="dark"] .search-suggestion {
+  background: var(--bg-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="dark"] .result-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="dark"] .result-card-img.placeholder {
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+}
+
+/* ========== Pull-Chain Theme Switch ========== */
+.pull-chain {
+  position: fixed;
+  right: 36px;
+  top: 0;
+  z-index: 200;
+  width: 32px;
+  height: 140px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+.pull-chain:active { cursor: grabbing; }
+.pull-chain.dark { /* dark mode marker */ }
+
+.pull-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 100px;
+  background: #aaa;
+  border-radius: 1px;
+  transition: background 0.35s ease;
+  pointer-events: none;
+}
+.pull-chain.dark .pull-line {
+  background: rgba(255,255,255,0.3);
+}
+
+.pull-handle {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: 2px solid #ccc;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.15),
+    0 0 0 1px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+.pull-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #888;
+  transition: background 0.35s ease;
+}
+
+.pull-chain.dark .pull-handle {
+  background: #222;
+  border-color: #333;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.pull-chain.dark .pull-handle::after {
+  background: #bbb;
+}
+
+/* Threshold hint: ring changes color */
+.pull-handle.near-threshold {
+  border-color: var(--accent-gold);
+  box-shadow:
+    0 2px 8px rgba(255,177,27,0.35),
+    0 0 0 1px rgba(255,177,27,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.pull-chain.dark .pull-handle.near-threshold {
+  border-color: var(--accent-gold);
+  box-shadow:
+    0 2px 8px rgba(255,177,27,0.45),
+    0 0 0 1px rgba(255,177,27,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- Navigation -->
+<nav class="nav" id="nav">
+  <a href="index.html" class="nav-logo">Apex<span>Arena</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">首页</a></li>
+    <li><a href="athletes.html">运动员</a></li>
+    <li><a href="data.html">数据</a></li>
+    <li><a href="search.html" class="active">球星搜索</a></li>
+  
+  </ul>
+  <div class="pull-chain" id="pullChain" aria-label="切换主题" title="向下拉切换日夜模式">
+    <div class="pull-line"></div>
+    <div class="pull-handle"></div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+  <!-- Search Hero -->
+  <div class="search-hero">
+    <div class="search-hero-tag">// PLAYER SEARCH</div>
+    <h1 class="search-hero-title">
+      <span class="line1">搜索全球</span>
+      <span class="line2">体育明星</span>
+    </h1>
+    <p class="search-hero-desc">基于 Wikipedia，覆盖篮球、足球、网球、F1、UFC 等全领域运动员</p>
+  </div>
+
+  <!-- Search Box -->
+  <div class="search-wrapper" id="searchWrapper">
+    <div class="search-box">
+      <span class="search-icon">&#x1F50D;</span>
+      <input
+        type="text"
+        class="search-input"
+        id="searchInput"
+        placeholder="输入运动员姓名，如 LeBron James、Faker、郑钦文..."
+        autocomplete="off"
+      >
+      <button class="search-btn" id="searchBtn">搜索</button>
+    </div>
+    <div class="search-suggestions">
+      <button class="search-suggestion" data-query="LeBron James">LeBron James</button>
+      <button class="search-suggestion" data-query="Faker">Faker</button>
+      <button class="search-suggestion" data-query="Carlos Alcaraz">Carlos Alcaraz</button>
+      <button class="search-suggestion" data-query="Lewis Hamilton">Lewis Hamilton</button>
+      <button class="search-suggestion" data-query="郑钦文">郑钦文</button>
+      <button class="search-suggestion" data-query="Jon Jones">Jon Jones</button>
+      <button class="search-suggestion" data-query="Katie Ledecky">Katie Ledecky</button>
+      <button class="search-suggestion" data-query="Giannis Antetokounmpo">Giannis Antetokounmpo</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-spinner" id="loadingSpinner"></div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="results-count" id="resultsCount"></div>
+    <div class="results-grid" id="resultsGrid"></div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="state-message" id="emptyState" style="display:none;">
+    <div class="state-icon">&#x1F3AF;</div>
+    <div class="state-text">输入关键词开始搜索</div>
+    <div class="state-sub">支持中英文运动员姓名</div>
+  </div>
+
+  <!-- No Results State -->
+  <div class="state-message" id="noResultsState" style="display:none;">
+    <div class="state-icon">&#x1F50E;</div>
+    <div class="state-text">未找到相关结果</div>
+    <div class="state-sub">试试其他拼写或更通用的搜索词</div>
+  </div>
+</main>
+
+<script src="shared-bg.js"></script>
+<script>
+(function() {
+
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const resultsSection = document.getElementById('resultsSection');
+const resultsGrid = document.getElementById('resultsGrid');
+const resultsCount = document.getElementById('resultsCount');
+const emptyState = document.getElementById('emptyState');
+const noResultsState = document.getElementById('noResultsState');
+
+// Wikipedia API endpoints
+const WIKI_SEARCH = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={query}&format=json&origin=*&srlimit=6';
+const WIKI_SUMMARY = 'https://en.wikipedia.org/api/rest_v1/page/summary/{title}';
+
+// Cache for summaries to avoid duplicate fetches
+const summaryCache = {};
+
+function showLoading() {
+  loadingSpinner.classList.add('visible');
+  resultsSection.classList.remove('visible');
+  noResultsState.style.display = 'none';
+  emptyState.style.display = 'none';
+}
+
+function hideLoading() {
+  loadingSpinner.classList.remove('visible');
+}
+
+async function fetchSummary(title) {
+  if (summaryCache[title]) return summaryCache[title];
+  const url = WIKI_SUMMARY.replace('{title}', encodeURIComponent(title));
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.type === 'disambiguation' || !data.extract) return null;
+    summaryCache[title] = {
+      title: data.title,
+      description: data.description || '',
+      extract: data.extract,
+      thumbnail: data.thumbnail ? data.thumbnail.source : null,
+      url: data.content_urls ? data.content_urls.desktop.page : ('https://' + data.dir + '.wikipedia.org/wiki/' + encodeURIComponent(data.title.replace(/ /g, '_')))
+    };
+    return summaryCache[title];
+  } catch {
+    return null;
+  }
+}
+
+function renderResults(results) {
+  resultsGrid.innerHTML = '';
+  resultsCount.textContent = `共 ${results.length} 条结果`;
+
+  results.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+
+    const imgHtml = item.thumbnail
+      ? `<img class="result-card-img" src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.querySelector('.result-card-img').className='result-card-img placeholder';this.parentElement.querySelector('.result-card-img').textContent='🎭';">`
+      : `<div class="result-card-img placeholder">🏆</div>`;
+
+    const liveSearchUrl = 'https://www.baidu.com/s?wd=' + encodeURIComponent(item.title + ' 比赛直播');
+    card.innerHTML = `
+      ${imgHtml}
+      <div class="result-card-body">
+        <h3 class="result-card-name">${item.title}</h3>
+        <p class="result-card-desc">${item.description || '运动员'}</p>
+        <p class="result-card-extract">${item.extract || ''}</p>
+        <div class="result-card-actions">
+          <a class="result-card-link" href="${item.url}" target="_blank" rel="noopener">
+            查看 Wikipedia <span class="arrow">→</span>
+          </a>
+          <a class="result-card-live" href="${liveSearchUrl}" target="_blank" rel="noopener">
+            <span class="live-dot"></span>观看直播
+          </a>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      window.open(item.url, '_blank');
+    });
+
+    resultsGrid.appendChild(card);
+
+    // Two-step animation: Step 1 → rotate in from center; Step 2 → snap into grid
+    const step1Delay = i * 90;
+    const step2Delay = step1Delay + 450 + i * 70;
+
+    // Step 1: 从中间向左边旋转飞入
+    setTimeout(() => card.classList.add('stage1'), step1Delay);
+    // Step 2: 归位排列
+    setTimeout(() => {
+      card.classList.add('visible');
+      setTimeout(() => card.classList.remove('stage1'), 100);
+    }, step2Delay);
+  });
+}
+
+function showNoResults() {
+  resultsSection.classList.remove('visible');
+  noResultsState.style.display = 'block';
+}
+
+async function performSearch(query) {
+  if (!query.trim()) return;
+  showLoading();
+
+  try {
+    const searchUrl = WIKI_SEARCH.replace('{query}', encodeURIComponent(query.trim()));
+    const searchRes = await fetch(searchUrl);
+    if (!searchRes.ok) throw new Error('Search failed');
+    const searchData = await searchRes.json();
+
+    const searchResults = searchData.query ? searchData.query.search : [];
+    if (searchResults.length === 0) {
+      hideLoading();
+      showNoResults();
+      return;
+    }
+
+    // Fetch summaries in parallel
+    const summaries = await Promise.all(
+      searchResults.map(sr => fetchSummary(sr.title))
+    );
+
+    const valid = summaries.filter(Boolean);
+
+    if (valid.length === 0) {
+      hideLoading();
+      showNoResults();
+      return;
+    }
+
+    hideLoading();
+    resultsSection.classList.add('visible');
+    renderResults(valid);
+  } catch (err) {
+    hideLoading();
+    noResultsState.querySelector('.state-text').textContent = '搜索失败，请检查网络';
+    noResultsState.querySelector('.state-sub').textContent = err.message;
+    showNoResults();
+  }
+}
+
+// Event: Search button
+searchBtn.addEventListener('click', () => {
+  performSearch(searchInput.value);
+});
+
+// Event: Enter key
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') performSearch(searchInput.value);
+});
+
+// Event: Quick suggestions
+document.querySelectorAll('.search-suggestion').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const query = btn.dataset.query;
+    searchInput.value = query;
+    performSearch(query);
+  });
+});
+
+// Nav scroll effect
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Show empty state on load
+emptyState.style.display = 'block';
+
+console.log('%cAPEX ARENA %cSearch v1.0',
+  'font-family: Impact, sans-serif; font-size: 1.5rem; color: #ffb11b;',
+  'font-size: 0.8rem; color: #9d9a95;');
+})();
+</script>
+
+<script>
+// ========== Pull-Chain Theme Switch ==========
+(function() {
+  const KEY = 'theme';
+  const chain = document.getElementById('pullChain');
+  const html = document.documentElement;
+
+  if (!chain) return;
+
+  const line = chain.querySelector('.pull-line');
+  const handle = chain.querySelector('.pull-handle');
+  const BASE_LINE_HEIGHT = 100;   // px, resting line height
+  const MAX_PULL = 90;            // max additional px on pull
+  const THRESHOLD = 55;           // px to trigger theme switch
+
+  let isDragging = false;
+  let startY = 0;
+  let currentTheme = 'light';
+  let pullDistance = 0;
+
+  function setTheme(t) {
+    currentTheme = t;
+    html.setAttribute('data-theme', t);
+    if (t === 'dark') {
+      chain.classList.add('dark');
+    } else {
+      chain.classList.remove('dark');
+    }
+    localStorage.setItem(KEY, t);
+  }
+
+  const saved = localStorage.getItem(KEY) || 'light';
+  setTheme(saved);
+
+  function updateVisual(d) {
+    pullDistance = d;
+    // Update line height
+    if (line) line.style.height = (BASE_LINE_HEIGHT + d) + 'px';
+    // Update handle position
+    if (handle) {
+      handle.style.transition = 'none';
+      handle.style.transform = 'translate(-50%, ' + d + 'px)';
+    }
+    // Threshold hint
+    if (d > THRESHOLD) {
+      handle && handle.classList.add('near-threshold');
+    } else {
+      handle && handle.classList.remove('near-threshold');
+    }
+  }
+
+  function snapBack() {
+    if (handle) {
+      handle.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      handle.style.transform = 'translate(-50%, 0)';
+    }
+    if (line) {
+      line.style.transition = 'height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      line.style.height = BASE_LINE_HEIGHT + 'px';
+    }
+    handle && handle.classList.remove('near-threshold');
+    pullDistance = 0;
+  }
+
+  function toggleTheme() {
+    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+  }
+
+  // Click to toggle (quick tap)
+  chain.addEventListener('click', function(e) {
+    if (isDragging) return;
+    toggleTheme();
+  });
+
+  // --- Drag: mouse ---
+  chain.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    startY = e.clientY;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    const dy = e.clientY - startY;
+    // Apply elastic resistance: the further you pull, the harder it gets
+    const raw = Math.max(0, dy);
+    const elastic = raw * (1 - raw / (MAX_PULL * 2.5));
+    const clamped = Math.min(elastic, MAX_PULL);
+    updateVisual(clamped);
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (pullDistance > THRESHOLD) {
+      toggleTheme();
+    }
+    snapBack();
+  });
+
+  // --- Drag: touch ---
+  chain.addEventListener('touchstart', function(e) {
+    isDragging = true;
+    startY = e.touches[0].clientY;
+    // Don't preventDefault here to allow click fallback
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!isDragging) return;
+    const dy = e.touches[0].clientY - startY;
+    const raw = Math.max(0, dy);
+    const elastic = raw * (1 - raw / (MAX_PULL * 2.5));
+    const clamped = Math.min(elastic, MAX_PULL);
+    updateVisual(clamped);
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (pullDistance > THRESHOLD) {
+      toggleTheme();
+    }
+    snapBack();
+  });
+
+  // Prevent text selection during drag
+  chain.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+  });
+})();
+</script>
+
+</body>
+</html>

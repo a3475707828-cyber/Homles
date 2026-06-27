@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据看板 — APEX ARENA</title>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg-deep: #08080e; --bg-surface: #f0f0f5; --bg-elevated: #f8f8fc;
+  --text-primary: #1c1c22; --text-secondary: #5a5860; --text-muted: #94929a;
+  --accent-flame: #ff3b1f; --accent-gold: #ffb11b; --accent-ember: #e85d04; --accent-ice: #3b82f6;
+  --border-subtle: rgba(0,0,0,0.08); --border-active: rgba(0,0,0,0.15);
+  --font-display: 'Impact','Haettenschweiler','Arial Narrow Bold',sans-serif;
+  --font-body: 'Segoe UI',system-ui,-apple-system,sans-serif;
+  --font-mono: 'Cascadia Code','Fira Code','Consolas',monospace;
+  --transition-fast: 150ms cubic-bezier(0.4,0,0.2,1);
+  --transition-smooth: 400ms cubic-bezier(0.16,1,0.3,1);
+}
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 100% 80% at 25% 15%, rgba(255,255,255,0.7) 0%, transparent 52%),
+    radial-gradient(ellipse 90% 90% at 72% 45%, rgba(248,248,252,0.45) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 85% at 45% 78%, rgba(235,235,242,0.35) 0%, transparent 45%),
+    linear-gradient(172deg, #cfcfe0 0%, #dedee8 40%, #c4c4d6 100%);
+  color: var(--text-primary);
+  line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+}
+canvas#bg-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+/* Nav */
+.nav {
+  position:fixed; top:0; left:0; right:0; z-index:100; padding:0 2rem; height:64px;
+  display:flex; align-items:center; justify-content:space-between;
+  background: linear-gradient(180deg, rgba(240,240,245,0.9) 40%, rgba(240,240,245,0) 100%);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.nav-logo { font-family:var(--font-display); font-size:1.5rem; letter-spacing:0.15em; color:var(--text-primary); text-decoration:none; text-transform:uppercase; }
+.nav-logo span { color:var(--accent-flame); }
+.nav-links { display:flex; gap:2rem; list-style:none; }
+.nav-links a { color:var(--text-secondary); text-decoration:none; font-size:0.85rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; position:relative; padding:0.25rem 0; transition:color var(--transition-fast); }
+.nav-links a::after { content:''; position:absolute; bottom:0; left:0; width:0; height:2px; background:var(--accent-flame); transition:width var(--transition-smooth); }
+.nav-links a:hover,.nav-links a.active { color:var(--text-primary); }
+.nav-links a:hover::after,.nav-links a.active::after { width:100%; }
+
+/* Page Header */
+.page-header { position:relative; z-index:1; padding:8rem 2rem 3rem; }
+.page-tag { font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.25em; color:var(--accent-flame); text-transform:uppercase; display:block; margin-bottom:0.75rem; }
+.page-title { font-family:var(--font-display); font-size:clamp(2.5rem,5vw,4rem); text-transform:uppercase; letter-spacing:-0.01em; line-height:1.05; }
+.page-title span { background:linear-gradient(135deg,var(--accent-flame),var(--accent-gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+/* KPI Cards Row */
+.kpi-row {
+  position:relative; z-index:1; padding:0 2rem 2rem;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;
+}
+.kpi-card {
+  background:rgba(255,255,255,0.55); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(0,0,0,0.06); padding:1.75rem;
+  transition:all var(--transition-smooth); cursor:default; position:relative; overflow:hidden;
+}
+.kpi-card:hover { border-color:var(--border-active); transform:translateY(-3px); }
+.kpi-card::after {
+  content:''; position:absolute; bottom:0; left:0; width:100%; height:2px;
+  background:linear-gradient(90deg, var(--accent-flame), var(--accent-gold));
+  transform:scaleX(0); transform-origin:left; transition:transform var(--transition-smooth);
+}
+.kpi-card:hover::after { transform:scaleX(1); }
+.kpi-label { font-size:0.7rem; letter-spacing:0.12em; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; }
+.kpi-value { font-family:var(--font-display); font-size:2.5rem; line-height:1; }
+.kpi-value.red { color:var(--accent-flame); }
+.kpi-value.gold { color:var(--accent-gold); }
+.kpi-value.ice { color:var(--accent-ice); }
+.kpi-change { font-size:0.75rem; margin-top:0.5rem; display:inline-flex; align-items:center; gap:0.25rem; }
+.kpi-change.up { color:#22c55e; }
+.kpi-change.down { color:var(--accent-flame); }
+
+/* Charts Grid */
+.charts-grid {
+  position:relative; z-index:1; padding:0 2rem 4rem;
+  display:grid; grid-template-columns: 2fr 1fr; gap:1.25rem;
+}
+.chart-panel {
+  background:rgba(255,255,255,0.55); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(0,0,0,0.06); padding:1.5rem;
+  transition:border-color var(--transition-fast);
+}
+.chart-panel:hover { border-color:var(--border-active); }
+.chart-panel.full { grid-column:1/-1; }
+.chart-title { font-family:var(--font-display); font-size:1.1rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:1.25rem; }
+.chart-subtitle { font-size:0.7rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem; }
+canvas.chart-canvas { width:100%; height:300px; display:block; }
+
+/* Leaderboard */
+.leaderboard { list-style:none; }
+.leaderboard li {
+  display:flex; align-items:center; gap:1rem; padding:0.85rem 0;
+  border-bottom:1px solid var(--border-subtle); transition:all var(--transition-fast);
+}
+.leaderboard li:hover { background:rgba(0,0,0,0.02); padding-left:0.5rem; }
+.lb-rank {
+  font-family:var(--font-display); font-size:1.3rem; width:2.5rem; flex-shrink:0;
+  text-align:center; color:var(--text-muted);
+}
+.lb-rank.top3 { color:var(--accent-gold); }
+.lb-name { flex:1; font-weight:600; }
+.lb-sport { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; }
+.lb-value { font-family:var(--font-mono); font-size:0.9rem; color:var(--accent-gold); }
+
+/* Tabs */
+.tabs { position:relative; z-index:1; padding:0 2rem 1.5rem; display:flex; gap:2rem; }
+.tab-btn {
+  font-family:var(--font-body); font-size:0.85rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
+  background:none; border:none; color:var(--text-muted); cursor:pointer;
+  padding-bottom:0.5rem; border-bottom:2px solid transparent; transition:all var(--transition-fast);
+}
+.tab-btn.active { color:var(--text-primary); border-bottom-color:var(--accent-flame); }
+.tab-btn:hover { color:var(--text-secondary); }
+
+/* Footer */
+.footer { position:relative; z-index:1; padding:3rem 2rem; background:rgba(255,255,255,0.45); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-top:1px solid rgba(0,0,0,0.06); display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); }
+
+@media (max-width:1024px) {
+  .kpi-row { grid-template-columns:repeat(2,1fr); }
+  .charts-grid { grid-template-columns:1fr; }
+}
+@media (max-width:640px) {
+  .nav { padding:0 1rem; } .nav-links { display:none; }
+  .page-header { padding:7rem 1rem 2rem; }
+  .kpi-row { grid-template-columns:1fr; padding:0 1rem 1rem; }
+  .charts-grid { padding:0 1rem 3rem; }
+  .tabs { padding:0 1rem 1rem; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation-duration:0.01ms!important; animation-iteration-count:1!important; transition-duration:0.01ms!important; }
+}
+
+/* ========== Dark Theme Overrides ========== */
+[data-theme="dark"] {
+  --bg-deep: #08080e; --bg-surface: #050508; --bg-elevated: #0a0a10;
+  --text-primary: #e8e6e3; --text-secondary: #9d9a95; --text-muted: #5c5a56;
+  --border-subtle: rgba(255,255,255,0.04); --border-active: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] body {
+  background:
+    linear-gradient(180deg, #000000 0%, #08080c 50%, #020204 100%);
+}
+[data-theme="dark"] .nav {
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0) 100%);
+}
+[data-theme="dark"] .kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="dark"] .chart-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="dark"] .footer {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-theme="dark"] .leaderboard li:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+/* ========== Pull-Chain Theme Switch ========== */
+.pull-chain {
+  position: fixed;
+  right: 36px;
+  top: 0;
+  z-index: 200;
+  width: 32px;
+  height: 140px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+.pull-chain:active { cursor: grabbing; }
+.pull-chain.dark { /* dark mode marker */ }
+
+.pull-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 100px;
+  background: #aaa;
+  border-radius: 1px;
+  transition: background 0.35s ease;
+  pointer-events: none;
+}
+.pull-chain.dark .pull-line {
+  background: rgba(255,255,255,0.3);
+}
+
+.pull-handle {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: 2px solid #ccc;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.15),
+    0 0 0 1px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+.pull-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #888;
+  transition: background 0.35s ease;
+}
+
+.pull-chain.dark .pull-handle {
+  background: #222;
+  border-color: #333;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.pull-chain.dark .pull-handle::after {
+  background: #bbb;
+}
+
+/* Threshold hint: ring changes color */
+.pull-handle.near-threshold {
+  border-color: var(--accent-gold);
+  box-shadow:
+    0 2px 8px rgba(255,177,27,0.35),
+    0 0 0 1px rgba(255,177,27,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.pull-chain.dark .pull-handle.near-threshold {
+  border-color: var(--accent-gold);
+  box-shadow:
+    0 2px 8px rgba(255,177,27,0.45),
+    0 0 0 1px rgba(255,177,27,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">Apex<span>Arena</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html#events">赛事</a></li>
+    <li><a href="index.html#sports">项目</a></li>
+    <li><a href="athletes.html">运动员</a></li>
+    <li><a href="data.html" class="active">数据</a></li>
+    <li><a href="search.html">球星搜索</a></li>
+    <li><a href="#">新闻</a></li>
+  
+  </ul>
+  <div class="pull-chain" id="pullChain" aria-label="切换主题" title="向下拉切换日夜模式">
+    <div class="pull-line"></div>
+    <div class="pull-handle"></div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <span class="page-tag">// 实时数据</span>
+  <h1 class="page-title">赛事<span>数据</span>看板</h1>
+</header>
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-label">进行中赛事</div>
+    <div class="kpi-value gold" id="kpi-active">1,247</div>
+    <div class="kpi-change up">+12% 较上周</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">总观赛人次</div>
+    <div class="kpi-value ice">3.2M</div>
+    <div class="kpi-change up">+28% 较上月</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">场均互动</div>
+    <div class="kpi-value red">8.6K</div>
+    <div class="kpi-change up">+5.3% 较上周</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">新增运动员</div>
+    <div class="kpi-value" style="color:#1c1c22;">247</div>
+    <div class="kpi-change up">+18% 较上月</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="trends">趋势</button>
+  <button class="tab-btn" data-tab="ranking">排行</button>
+  <button class="tab-btn" data-tab="compare">对比</button>
+</div>
+
+<div class="charts-grid" id="tab-trends">
+  <div class="chart-panel">
+    <div class="chart-title">月度赛事活跃度</div>
+    <div class="chart-subtitle">2026.01 — 2026.06</div>
+    <canvas class="chart-canvas" id="chartLine"></canvas>
+  </div>
+  <div class="chart-panel">
+    <div class="chart-title">热门项目分布</div>
+    <div class="chart-subtitle">当前赛季占比</div>
+    <canvas class="chart-canvas" id="chartDoughnut"></canvas>
+  </div>
+  <div class="chart-panel">
+    <div class="chart-title">各国奖牌榜 Top 10</div>
+    <canvas class="chart-canvas" id="chartBar"></canvas>
+  </div>
+  <div class="chart-panel">
+    <div class="chart-title">运动员领先榜</div>
+    <ul class="leaderboard" id="leaderboard"></ul>
+  </div>
+</div>
+
+<div class="charts-grid" id="tab-ranking" style="display:none;">
+  <div class="chart-panel full">
+    <div class="chart-title">全球运动员综合排名 Top 20</div>
+    <canvas class="chart-canvas" id="chartBarH" style="height:500px;"></canvas>
+  </div>
+</div>
+
+<div class="charts-grid" id="tab-compare" style="display:none;">
+  <div class="chart-panel full">
+    <div class="chart-title">篮球 · 得分榜对比</div>
+    <canvas class="chart-canvas" id="chartRadar" style="height:400px;"></canvas>
+  </div>
+</div>
+
+<footer class="footer">
+  <span>&copy; 2026 Apex Arena</span>
+  <span>Data refreshed every 60s</span>
+</footer>
+
+<script src="shared-bg.js"></script>
+<script>
+// ========== Chart: Line (月度活跃度) ==========
+const cl = document.getElementById('chartLine');
+const ctl = cl.getContext('2d');
+function drawLine() {
+  const W=cl.width=cl.offsetWidth*2, H=cl.height=300*2;
+  ctl.scale(2,2);
+  const w=W/2, h=H/2, pad=50, data=[420,680,790,950,1120,1247];
+  const max=1400, steps=7;
+  // Grid
+  ctl.strokeStyle='rgba(0,0,0,0.06)'; ctl.lineWidth=1;
+  for(let i=0;i<=steps;i++){ const y=pad+(h-pad*2)*(i/steps); ctl.beginPath(); ctl.moveTo(pad,y); ctl.lineTo(w-pad,y); ctl.stroke(); }
+  // Labels
+  const months=['Jan','Feb','Mar','Apr','May','Jun'];
+  ctl.fillStyle='#5c5a56'; ctl.font='11px monospace';
+  data.forEach((_,i)=>{ const x=pad+(w-pad*2)*(i/(data.length-1)); ctl.fillText(months[i],x-12,h-10); });
+  for(let i=0;i<=steps;i++){ const val=Math.round(max*(1-i/steps)); ctl.fillText(val,5,pad+(h-pad*2)*(i/steps)+4); }
+  // Gradient fill
+  const grad=ctl.createLinearGradient(0,pad,0,h-pad);
+  grad.addColorStop(0,'rgba(255,59,31,0.25)'); grad.addColorStop(1,'rgba(255,59,31,0)');
+  ctl.beginPath(); ctl.moveTo(pad,h-pad);
+  data.forEach((v,i)=>{ const x=pad+(w-pad*2)*(i/(data.length-1)), y=pad+(h-pad*2)*(1-v/max); ctl.lineTo(x,y); });
+  ctl.lineTo(pad+(w-pad*2),h-pad); ctl.closePath(); ctl.fillStyle=grad; ctl.fill();
+  // Line
+  ctl.beginPath();
+  data.forEach((v,i)=>{ const x=pad+(w-pad*2)*(i/(data.length-1)), y=pad+(h-pad*2)*(1-v/max); if(i===0)ctl.moveTo(x,y); else ctl.lineTo(x,y); });
+  ctl.strokeStyle='#ff3b1f'; ctl.lineWidth=2.5; ctl.lineJoin='round'; ctl.stroke();
+  // Dots
+  data.forEach((v,i)=>{ const x=pad+(w-pad*2)*(i/(data.length-1)), y=pad+(h-pad*2)*(1-v/max); ctl.beginPath(); ctl.arc(x,y,4,0,Math.PI*2); ctl.fillStyle='#ff3b1f'; ctl.fill(); ctl.beginPath(); ctl.arc(x,y,10,0,Math.PI*2); ctl.fillStyle='rgba(255,59,31,0.15)'; ctl.fill(); });
+}
+drawLine();
+
+// ========== Chart: Doughnut (项目分布) ==========
+const cd = document.getElementById('chartDoughnut');
+const ctd = cd.getContext('2d');
+function drawDoughnut() {
+  const W=cd.width=cd.offsetWidth*2, H=cd.height=300*2;
+  ctd.scale(2,2);
+  const cx=W/4, cy=H/4, r=100;
+  const slices=[{v:32,c:'#ff3b1f',l:'篮球'},{v:24,c:'#ffb11b',l:'足球'},{v:15,c:'#e85d04',l:'网球'},{v:10,c:'#3b82f6',l:'格斗'},{v:8,c:'#22c55e',l:'赛车'},{v:6,c:'#a855f7',l:'电竞'},{v:5,c:'#f97316',l:'游泳'}];
+  const total=slices.reduce((a,s)=>a+s.v,0);
+  let angle=-Math.PI/2;
+  slices.forEach(s=>{
+    const sliceAngle=(s.v/total)*Math.PI*2;
+    ctd.beginPath(); ctd.moveTo(cx,cy); ctd.arc(cx,cy,r,angle,angle+sliceAngle);
+    ctd.fillStyle=s.c; ctd.fill();
+    const midAngle=angle+sliceAngle/2;
+    const lx=cx+Math.cos(midAngle)*135;
+    const ly=cy+Math.sin(midAngle)*135;
+    ctd.fillStyle='#9d9a95'; ctd.font='10px monospace';
+    ctd.fillText(`${s.l} ${s.v}%`, lx-20, ly);
+    angle+=sliceAngle;
+  });
+  // Center hole
+  ctd.beginPath(); ctd.arc(cx,cy,50,0,Math.PI*2); ctd.fillStyle=document.documentElement.getAttribute('data-theme')==='dark'?'#0a0a10':'#f0f0f5'; ctd.fill();
+  ctd.fillStyle='#e8e6e3'; ctd.font='bold 16px Impact, sans-serif'; ctd.textAlign='center';
+  ctd.fillText('12项',cx,cy-6); ctd.font='9px monospace'; ctd.fillStyle='#5c5a56'; ctd.fillText('运动项目',cx,cy+14); ctd.textAlign='start';
+}
+drawDoughnut();
+
+// ========== Chart: Bar (奖牌榜) ==========
+const cb = document.getElementById('chartBar');
+const ctb = cb.getContext('2d');
+function drawBar() {
+  const W=cb.width=cb.offsetWidth*2, H=cb.height=300*2;
+  ctb.scale(2,2);
+  const w=W/2, h=H/2, pad={l:45,r:20,t:30,b:50};
+  const countries=[
+    {n:'USA',g:42,s:38,b:38},{n:'CHN',g:39,s:27,b:24},{n:'GBR',g:22,s:21,b:22},
+    {n:'JPN',g:20,s:12,b:13},{n:'AUS',g:18,s:19,b:16},{n:'FRA',g:16,s:22,b:22},
+    {n:'GER',g:12,s:13,b:8},{n:'NED',g:15,s:7,b:12},{n:'KOR',g:13,s:9,b:10},{n:'ITA',g:11,s:14,b:19}
+  ];
+  const barW=Math.floor((w-pad.l-pad.r)/countries.length-8);
+  const maxVal=50;
+  // Grid
+  ctb.strokeStyle='rgba(0,0,0,0.06)'; ctb.lineWidth=1;
+  for(let i=0;i<=5;i++){ const y=pad.t+(h-pad.t-pad.b)*(i/5); ctb.beginPath(); ctb.moveTo(pad.l,y); ctb.lineTo(w-pad.r,y); ctb.stroke(); ctb.fillStyle='#5c5a56'; ctb.font='10px monospace'; ctb.fillText(Math.round(maxVal*(1-i/5)),2,y+4); }
+  // Bars
+  countries.forEach((c,i)=>{
+    const x=pad.l+i*(barW+8);
+    ctb.fillStyle='#ff3b1f'; ctb.fillRect(x,pad.t+(h-pad.t-pad.b)*(1-c.g/maxVal),barW/3,(h-pad.t-pad.b)*(c.g/maxVal));
+    ctb.fillStyle='#ffb11b'; ctb.fillRect(x+barW/3,pad.t+(h-pad.t-pad.b)*(1-c.s/maxVal),barW/3,(h-pad.t-pad.b)*(c.s/maxVal));
+    ctb.fillStyle='#e85d04'; ctb.fillRect(x+barW*2/3,pad.t+(h-pad.t-pad.b)*(1-c.b/maxVal),barW/3,(h-pad.t-pad.b)*(c.b/maxVal));
+    ctb.fillStyle='#5c5a56'; ctb.font='9px monospace'; ctb.textAlign='center';
+    ctb.fillText(c.n,x+barW/2,h-15);
+  });
+  // Legend
+  ctb.textAlign='start';
+  ctb.fillStyle='#ff3b1f'; ctb.fillRect(w-120,8,10,10); ctb.fillStyle='#9d9a95'; ctb.font='10px monospace'; ctb.fillText('金',w-106,18);
+  ctb.fillStyle='#ffb11b'; ctb.fillRect(w-80,8,10,10); ctb.fillText('银',w-66,18);
+  ctb.fillStyle='#e85d04'; ctb.fillRect(w-40,8,10,10); ctb.fillText('铜',w-26,18);
+}
+drawBar();
+
+// ========== Leaderboard ==========
+const lbData=[
+  {rank:1,name:'勒布朗·詹姆斯',sport:'篮球',val:'+32.8'},{rank:2,name:'基利安·姆巴佩',sport:'足球',val:'+28.4'},
+  {rank:3,name:'诺瓦克·德约科维奇',sport:'网球',val:'+27.1'},{rank:4,name:'马克斯·维斯塔潘',sport:'赛车',val:'+25.6'},
+  {rank:5,name:'乔恩·琼斯',sport:'格斗',val:'+24.9'},{rank:6,name:'扬尼斯·阿德托昆博',sport:'篮球',val:'+23.2'},
+  {rank:7,name:'李相赫',sport:'电竞',val:'+21.7'}
+];
+document.getElementById('leaderboard').innerHTML = lbData.map(a=>
+  `<li><span class="lb-rank${a.rank<=3?' top3':''}">${String(a.rank).padStart(2,'0')}</span><span class="lb-name">${a.name}</span><span class="lb-sport">${a.sport}</span><span class="lb-value">${a.val}</span></li>`
+).join('');
+
+// ========== Tab Switch ==========
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['trends','ranking','compare'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+    document.getElementById('tab-'+btn.dataset.tab).style.display='';
+    if(btn.dataset.tab==='ranking') drawBarH();
+    if(btn.dataset.tab==='compare') drawRadar();
+  });
+});
+
+// ========== Tab: Ranking bar chart ==========
+function drawBarH() {
+  const c=document.getElementById('chartBarH');
+  if(!c) return;
+  const W=c.width=c.offsetWidth*2, H=c.height=500*2;
+  const ctx=c.getContext('2d'); ctx.scale(2,2);
+  const w=W/2, h=H/2, pad=120;
+  const athletes=lbData.slice(0,7);
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+  athletes.forEach((a,i)=>{
+    const y=40+(h-80)*(i/athletes.length)+12;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(w-20,y); ctx.stroke();
+    ctx.fillStyle='#9d9a95'; ctx.font='12px Segoe UI,sans-serif'; ctx.fillText(a.name,pad-8,y+4,undefined,'right');
+    const bw=((w-pad-40)*parseFloat(a.val)/35);
+    const grad=ctx.createLinearGradient(pad,0,pad+bw,0);
+    grad.addColorStop(0,'#ff3b1f'); grad.addColorStop(1,'#ffb11b');
+    ctx.fillStyle=grad; ctx.fillRect(pad,y-10,bw,20);
+    ctx.fillStyle='#e8e6e3'; ctx.font='bold 13px monospace'; ctx.fillText(a.val,pad+bw+8,y+4);
+  });
+}
+
+function drawRadar() {
+  const c=document.getElementById('chartRadar');
+  if(!c) return;
+  const W=c.width=c.offsetWidth*2, H=c.height=400*2;
+  const ctx=c.getContext('2d'); ctx.scale(2,2);
+  const w=W/2, h=H/2, cx=w/2, cy=h/2, r=130;
+  const labels=['得分','助攻','篮板','抢断','效率','胜率'];
+  const data1=[95,78,62,85,90,72]; // 詹姆斯
+  const data2=[72,92,45,68,80,88]; // 约基奇
+  ctx.clearRect(0,0,w,h);
+  // Grid
+  [0.2,0.4,0.6,0.8,1].forEach(s=>{
+    ctx.beginPath();
+    for(let i=0;i<6;i++){ const angle=-Math.PI/2+(Math.PI*2/6)*i; const px=cx+Math.cos(angle)*r*s, py=cy+Math.sin(angle)*r*s; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+    ctx.closePath(); ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.stroke();
+  });
+  // Axes
+  labels.forEach((l,i)=>{
+    const angle=-Math.PI/2+(Math.PI*2/6)*i;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r);
+    ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.stroke();
+    ctx.fillStyle='#9d9a95'; ctx.font='10px monospace';
+    ctx.fillText(l,cx+Math.cos(angle)*(r+20)-15,cy+Math.sin(angle)*(r+20)+4);
+  });
+  // Draw data
+  function drawPoly(data,color,alpha){
+    ctx.beginPath();
+    for(let i=0;i<6;i++){ const angle=-Math.PI/2+(Math.PI*2/6)*i; const px=cx+Math.cos(angle)*r*(data[i]/100), py=cy+Math.sin(angle)*r*(data[i]/100); i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+    ctx.closePath(); ctx.fillStyle=color.replace('1)',alpha+')'); ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+  }
+  drawPoly(data2,'rgba(59,130,246,1)',0.2);
+  drawPoly(data1,'rgba(255,59,31,1)',0.15);
+  // Legend
+  ctx.fillStyle='#ff3b1f'; ctx.fillRect(w-150,12,12,12); ctx.fillStyle='#9d9a95'; ctx.font='11px monospace'; ctx.fillText('LeBron',w-132,23);
+  ctx.fillStyle='#3b82f6'; ctx.fillRect(w-70,12,12,12); ctx.fillText('Jokic',w-52,23);
+}
+
+// ========== KPI Counter Animation ==========
+function animateKPI(el,target){
+  const dur=1500,start=performance.now();
+  const initial=parseInt(el.textContent.replace(/[^0-9]/g,''))||0;
+  function step(now){
+    const progress=Math.min((now-start)/dur,1);
+    const eased=1-Math.pow(1-progress,3);
+    el.textContent=Math.floor(initial+(target-initial)*eased).toLocaleString();
+    if(progress<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+setTimeout(()=>{
+  animateKPI(document.getElementById('kpi-active'),1247);
+},300);
+</script>
+
+<script>
+// ========== Pull-Chain Theme Switch ==========
+(function() {
+  const KEY = 'theme';
+  const chain = document.getElementById('pullChain');
+  const html = document.documentElement;
+
+  if (!chain) return;
+
+  const line = chain.querySelector('.pull-line');
+  const handle = chain.querySelector('.pull-handle');
+  const BASE_LINE_HEIGHT = 100;   // px, resting line height
+  const MAX_PULL = 90;            // max additional px on pull
+  const THRESHOLD = 55;           // px to trigger theme switch
+
+  let isDragging = false;
+  let startY = 0;
+  let currentTheme = 'light';
+  let pullDistance = 0;
+
+  function setTheme(t) {
+    currentTheme = t;
+    html.setAttribute('data-theme', t);
+    if (t === 'dark') {
+      chain.classList.add('dark');
+    } else {
+      chain.classList.remove('dark');
+    }
+    localStorage.setItem(KEY, t);
+  }
+
+  const saved = localStorage.getItem(KEY) || 'light';
+  setTheme(saved);
+
+  function updateVisual(d) {
+    pullDistance = d;
+    // Update line height
+    if (line) line.style.height = (BASE_LINE_HEIGHT + d) + 'px';
+    // Update handle position
+    if (handle) {
+      handle.style.transition = 'none';
+      handle.style.transform = 'translate(-50%, ' + d + 'px)';
+    }
+    // Threshold hint
+    if (d > THRESHOLD) {
+      handle && handle.classList.add('near-threshold');
+    } else {
+      handle && handle.classList.remove('near-threshold');
+    }
+  }
+
+  function snapBack() {
+    if (handle) {
+      handle.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      handle.style.transform = 'translate(-50%, 0)';
+    }
+    if (line) {
+      line.style.transition = 'height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      line.style.height = BASE_LINE_HEIGHT + 'px';
+    }
+    handle && handle.classList.remove('near-threshold');
+    pullDistance = 0;
+  }
+
+  function toggleTheme() {
+    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+  }
+
+  // Click to toggle (quick tap)
+  chain.addEventListener('click', function(e) {
+    if (isDragging) return;
+    toggleTheme();
+  });
+
+  // --- Drag: mouse ---
+  chain.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    startY = e.clientY;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    const dy = e.clientY - startY;
+    // Apply elastic resistance: the further you pull, the harder it gets
+    const raw = Math.max(0, dy);
+    const elastic = raw * (1 - raw / (MAX_PULL * 2.5));
+    const clamped = Math.min(elastic, MAX_PULL);
+    updateVisual(clamped);
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (pullDistance > THRESHOLD) {
+      toggleTheme();
+    }
+    snapBack();
+  });
+
+  // --- Drag: touch ---
+  chain.addEventListener('touchstart', function(e) {
+    isDragging = true;
+    startY = e.touches[0].clientY;
+    // Don't preventDefault here to allow click fallback
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!isDragging) return;
+    const dy = e.touches[0].clientY - startY;
+    const raw = Math.max(0, dy);
+    const elastic = raw * (1 - raw / (MAX_PULL * 2.5));
+    const clamped = Math.min(elastic, MAX_PULL);
+    updateVisual(clamped);
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (pullDistance > THRESHOLD) {
+      toggleTheme();
+    }
+    snapBack();
+  });
+
+  // Prevent text selection during drag
+  chain.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+  });
+})();
+</script>
+
+</body>
+</html>
